@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universities Analytics Dashboard</title>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", "Segoe UI", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #7e22ce 100%
+        );
+        min-height: 100vh;
+        color: #fff;
+      }
+
+      .dashboard-wrapper {
+        padding: 20px;
+        max-width: 1800px;
+        margin: 0 auto;
+      }
+
+      .dashboard-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .dashboard-title {
+        font-size: 2.5em;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff 0%, #a8edea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .control-panel {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .filter-label {
+        font-size: 0.85em;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+      }
+
+      select {
+        padding: 10px 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 0.95em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 150px;
+      }
+
+      select:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      select option {
+        background: #1e3c72;
+        color: #fff;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+      }
+
+      .kpi-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
+      }
+
+      .kpi-label {
+        font-size: 0.9em;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .kpi-value {
+        font-size: 2.5em;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .kpi-trend {
+        font-size: 0.85em;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+      }
+
+      .chart-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+
+      .chart-title {
+        font-size: 1.3em;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .chart {
+        width: 100%;
+        height: 400px;
+      }
+
+      .large-chart {
+        grid-column: 1 / -1;
+      }
+
+      .large-chart .chart {
+        height: 500px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.2em;
+      }
+
+      .error-message {
+        background: rgba(248, 113, 113, 0.2);
+        border: 1px solid #f87171;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      @media (max-width: 768px) {
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .dashboard-title {
+          font-size: 1.8em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-wrapper">
+      <div class="dashboard-header">
+        <div class="header-content">
+          <div>
+            <h1 class="dashboard-title">🎓 Universities Analytics Dashboard</h1>
+            <p style="color: rgba(255, 255, 255, 0.8); margin-top: 8px">
+              Real-Time Data Visualization System
+            </p>
+          </div>
+          <div class="control-panel">
+            <div class="filter-group">
+              <label class="filter-label">Department</label>
+              <select id="departmentFilter" onchange="filterData()">
+                <option value="all">All Departments</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Year</label>
+              <select id="yearFilter" onchange="filterData()">
+                <option value="all">All Years</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loadingMessage" class="loading">Loading dashboard data...</div>
+      <div id="errorMessage" style="display: none"></div>
+
+      <div id="dashboardContent" style="display: none">
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <div class="chart-grid">
+          <div class="chart-container large-chart">
+            <h3 class="chart-title">📈 Student Enrollment Trends by Year</h3>
+            <div id="enrollmentChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">💰 Professor Salary Distribution</h3>
+            <div id="salaryChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">📚 Most Popular Courses</h3>
+            <div id="courseChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">💵 Annual Fees by Program</h3>
+            <div id="revenueChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">👥 Student Demographics</h3>
+            <div id="demographicsChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">🎯 Academic Performance by Department</h3>
+            <div id="performanceChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">🔬 Research Publications by Year</h3>
+            <div id="researchChart" class="chart"></div>
+          </div>
+
+          <div class="chart-container">
+            <h3 class="chart-title">💼 Graduate Employment by Sector</h3>
+            <div id="employmentChart" class="chart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let dashboardData = {};
+      let chartInstances = {};
+
+      // Fetch data from API
+      async function fetchDashboardData() {
+        try {
+          const [
+            kpiData,
+            studentsYear,
+            studentsDept,
+            salaries,
+            courses,
+            fees,
+            performance,
+            research,
+            demographics,
+            employment,
+          ] = await Promise.all([
+            fetch("/api/kpi-summary").then((r) => r.json()),
+            fetch("/api/students-by-year").then((r) => r.json()),
+            fetch("/api/students-by-department").then((r) => r.json()),
+            fetch("/api/salaries-by-position").then((r) => r.json()),
+            fetch("/api/popular-courses").then((r) => r.json()),
+            fetch("/api/fees-by-program").then((r) => r.json()),
+            fetch("/api/performance-by-department").then((r) => r.json()),
+            fetch("/api/research-publications").then((r) => r.json()),
+            fetch("/api/demographics").then((r) => r.json()),
+            fetch("/api/employment-by-sector").then((r) => r.json()),
+          ]);
+
+          dashboardData = {
+            kpi: kpiData,
+            studentsYear,
+            studentsDept,
+            salaries,
+            courses,
+            fees,
+            performance,
+            research,
+            demographics,
+            employment,
+          };
+
+          document.getElementById("loadingMessage").style.display = "none";
+          document.getElementById("dashboardContent").style.display = "block";
+
+          initializeDashboard();
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          document.getElementById("loadingMessage").style.display = "none";
+          document.getElementById("errorMessage").innerHTML = `
+                    <div class="error-message">
+                        <h3>⚠️ Error Loading Data</h3>
+                        <p>Could not connect to the database. Please make sure Flask server is running.</p>
+                        <p style="margin-top: 10px; font-size: 0.9em;">${error.message}</p>
+                    </div>
+                `;
+          document.getElementById("errorMessage").style.display = "block";
+        }
+      }
+
+      function initializeDashboard() {
+        createKPICards();
+        loadDepartmentFilters();
+
+        am5.ready(function () {
+          createEnrollmentChart();
+          createSalaryChart();
+          createCourseChart();
+          createRevenueChart();
+          createDemographicsChart();
+          createPerformanceChart();
+          createResearchChart();
+          createEmploymentChart();
+        });
+      }
+
+      function createKPICards() {
+        const kpis = [
+          {
+            label: "Total Students",
+            value: dashboardData.kpi.total_students.toLocaleString(),
+            icon: "👨‍🎓",
+          },
+          {
+            label: "Total Professors",
+            value: dashboardData.kpi.total_professors.toLocaleString(),
+            icon: "👩‍🏫",
+          },
+          {
+            label: "Average Salary",
+            value: `$${(dashboardData.kpi.avg_salary / 1000).toFixed(0)}K`,
+            icon: "💰",
+          },
+          {
+            label: "Total Courses",
+            value: dashboardData.kpi.total_courses.toLocaleString(),
+            icon: "📚",
+          },
+          {
+            label: "Average Fee",
+            value: `$${(dashboardData.kpi.avg_fee / 1000).toFixed(0)}K`,
+            icon: "💵",
+          },
+          {
+            label: "Employment Rate",
+            value: `${dashboardData.kpi.employment_rate}%`,
+            icon: "💼",
+          },
+        ];
+
+        document.getElementById("kpiGrid").innerHTML = kpis
+          .map(
+            (k) => `
+                <div class="kpi-card">
+                    <div class="kpi-label">${k.icon} ${k.label}</div>
+                    <div class="kpi-value">${k.value}</div>
+                    <div class="kpi-trend">Live from database</div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function loadDepartmentFilters() {
+        const depts = [
+          ...new Set(dashboardData.studentsDept.map((d) => d.department)),
+        ];
+        const select = document.getElementById("departmentFilter");
+        depts.forEach((dept) => {
+          const option = document.createElement("option");
+          option.value = dept;
+          option.textContent = dept;
+          select.appendChild(option);
+        });
+      }
+
+      async function filterData() {
+        const dept = document.getElementById("departmentFilter").value;
+        const year = document.getElementById("yearFilter").value;
+
+        console.log(`Filtering by Department: ${dept}, Year: ${year}`);
+
+        // Show loading state
+        document.getElementById("dashboardContent").style.opacity = "0.5";
+
+        try {
+          // Fetch filtered data from backend
+          let studentsYearUrl = "/api/students-by-year";
+          let studentsDeptUrl = "/api/students-by-department";
+          let coursesUrl = "/api/popular-courses";
+          let performanceUrl = "/api/performance-by-department";
+
+          // Add query parameters for filtering
+          const params = new URLSearchParams();
+          if (dept !== "all") params.append("department", dept);
+          if (year !== "all") params.append("year", year);
+
+          const queryString = params.toString();
+          if (queryString) {
+            studentsYearUrl += "?" + queryString;
+            studentsDeptUrl += "?" + queryString;
+            coursesUrl += "?" + queryString;
+            performanceUrl += "?" + queryString;
+          }
+
+          const [studentsYear, studentsDept, courses, performance] =
+            await Promise.all([
+              fetch(studentsYearUrl).then((r) => r.json()),
+              fetch(studentsDeptUrl).then((r) => r.json()),
+              fetch(coursesUrl).then((r) => r.json()),
+              fetch(performanceUrl).then((r) => r.json()),
+            ]);
+
+          // Update dashboard data
+          dashboardData.studentsYear = studentsYear;
+          dashboardData.studentsDept = studentsDept;
+          dashboardData.courses = courses;
+          dashboardData.performance = performance;
+
+          // Update KPIs based on filtered data
+          updateKPIsWithFilteredData();
+
+          // Recreate charts with filtered data
+          updateCharts();
+
+          document.getElementById("dashboardContent").style.opacity = "1";
+        } catch (error) {
+          console.error("Error filtering data:", error);
+          document.getElementById("dashboardContent").style.opacity = "1";
+          alert("Error applying filters. Please try again.");
+        }
+      }
+
+      function updateKPIsWithFilteredData() {
+        const dept = document.getElementById("departmentFilter").value;
+        const year = document.getElementById("yearFilter").value;
+
+        // Calculate filtered totals
+        let totalStudents = dashboardData.studentsYear.reduce(
+          (sum, item) => sum + item.count,
+          0
+        );
+        let avgGPA =
+          dashboardData.studentsDept.length > 0
+            ? (
+                dashboardData.studentsDept.reduce(
+                  (sum, d) => sum + (d.avg_gpa || 0),
+                  0
+                ) / dashboardData.studentsDept.length
+              ).toFixed(2)
+            : "N/A";
+
+        const filterText =
+          dept !== "all" || year !== "all"
+            ? `Filtered: ${dept !== "all" ? dept : "All"} ${
+                year !== "all" ? year : ""
+              }`.trim()
+            : "Live from database";
+
+        // Update KPI cards with filtered info
+        const kpis = [
+          {
+            label: "Total Students",
+            value: totalStudents.toLocaleString(),
+            icon: "👨‍🎓",
+          },
+          {
+            label: "Total Professors",
+            value: dashboardData.kpi.total_professors.toLocaleString(),
+            icon: "👩‍🏫",
+          },
+          {
+            label: "Average Salary",
+            value: `${(dashboardData.kpi.avg_salary / 1000).toFixed(0)}K`,
+            icon: "💰",
+          },
+          {
+            label: "Total Courses",
+            value: dashboardData.courses.length.toLocaleString(),
+            icon: "📚",
+          },
+          { label: "Average GPA", value: avgGPA, icon: "🎯" },
+          {
+            label: "Employment Rate",
+            value: `${dashboardData.kpi.employment_rate}%`,
+            icon: "💼",
+          },
+        ];
+
+        document.getElementById("kpiGrid").innerHTML = kpis
+          .map(
+            (k) => `
+                <div class="kpi-card">
+                    <div class="kpi-label">${k.icon} ${k.label}</div>
+                    <div class="kpi-value">${k.value}</div>
+                    <div class="kpi-trend">${filterText}</div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function updateCharts() {
+        // Dispose old charts
+        if (chartInstances.enrollment) chartInstances.enrollment.dispose();
+        if (chartInstances.course) chartInstances.course.dispose();
+        if (chartInstances.performance) chartInstances.performance.dispose();
+
+        // Recreate charts with filtered data
+        createEnrollmentChart();
+        createCourseChart();
+        createPerformanceChart();
+      }
+
+      function createEnrollmentChart() {
+        const root = am5.Root.new("enrollmentChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(
+          am5xy.XYChart.new(root, {
+            panX: true,
+            panY: true,
+            wheelX: "panX",
+            wheelY: "zoomX",
+            pinchZoomX: true,
+          })
+        );
+
+        const xAxis = chart.xAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "year",
+            renderer: am5xy.AxisRendererX.new(root, {}),
+          })
+        );
+
+        xAxis.data.setAll(dashboardData.studentsYear);
+
+        const yAxis = chart.yAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+          })
+        );
+
+        const series = chart.series.push(
+          am5xy.LineSeries.new(root, {
+            name: "Students",
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "count",
+            categoryXField: "year",
+            stroke: am5.color(0x4ade80),
+            fill: am5.color(0x4ade80),
+            tooltip: am5.Tooltip.new(root, {
+              labelText: "{valueY} students",
+            }),
+          })
+        );
+
+        series.strokes.template.setAll({ strokeWidth: 3 });
+        series.fills.template.setAll({ fillOpacity: 0.3, visible: true });
+        series.data.setAll(dashboardData.studentsYear);
+
+        series.bullets.push(() =>
+          am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, {
+              radius: 6,
+              fill: am5.color(0x4ade80),
+            }),
+          })
+        );
+
+        chart.set("cursor", am5xy.XYCursor.new(root, {}));
+        chartInstances.enrollment = root;
+      }
+
+      function createSalaryChart() {
+        const root = am5.Root.new("salaryChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(am5xy.XYChart.new(root, {}));
+
+        const yAxis = chart.yAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "position",
+            renderer: am5xy.AxisRendererY.new(root, { inversed: true }),
+          })
+        );
+
+        yAxis.data.setAll(dashboardData.salaries);
+
+        const xAxis = chart.xAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererX.new(root, {}),
+          })
+        );
+
+        const series = chart.series.push(
+          am5xy.ColumnSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueXField: "salary",
+            categoryYField: "position",
+            tooltip: am5.Tooltip.new(root, { labelText: "${valueX}" }),
+          })
+        );
+
+        series.columns.template.setAll({
+          cornerRadiusTR: 5,
+          cornerRadiusBR: 5,
+          strokeOpacity: 0,
+          fillGradient: am5.LinearGradient.new(root, {
+            stops: [
+              { color: am5.color(0xa8edea) },
+              { color: am5.color(0xfed6e3) },
+            ],
+          }),
+        });
+
+        series.data.setAll(dashboardData.salaries);
+        chartInstances.salary = root;
+      }
+
+      function createCourseChart() {
+        const root = am5.Root.new("courseChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(am5xy.XYChart.new(root, {}));
+
+        const xAxis = chart.xAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "course",
+            renderer: am5xy.AxisRendererX.new(root, {}),
+          })
+        );
+
+        xAxis.data.setAll(dashboardData.courses);
+        xAxis.get("renderer").labels.template.setAll({
+          rotation: -45,
+          centerY: am5.p50,
+          centerX: am5.p100,
+          paddingRight: 15,
+        });
+
+        const yAxis = chart.yAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+          })
+        );
+
+        const series = chart.series.push(
+          am5xy.ColumnSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "students",
+            categoryXField: "course",
+            tooltip: am5.Tooltip.new(root, { labelText: "{valueY} students" }),
+          })
+        );
+
+        series.columns.template.setAll({
+          cornerRadiusTL: 5,
+          cornerRadiusTR: 5,
+          strokeOpacity: 0,
+        });
+
+        series.data.setAll(dashboardData.courses);
+        chartInstances.course = root;
+      }
+
+      function createRevenueChart() {
+        const root = am5.Root.new("revenueChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(am5xy.XYChart.new(root, {}));
+
+        const xAxis = chart.xAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "program",
+            renderer: am5xy.AxisRendererX.new(root, {}),
+          })
+        );
+
+        xAxis.data.setAll(dashboardData.fees);
+
+        const yAxis = chart.yAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+          })
+        );
+
+        const series = chart.series.push(
+          am5xy.ColumnSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "fee",
+            categoryXField: "program",
+            tooltip: am5.Tooltip.new(root, { labelText: "${valueY}" }),
+          })
+        );
+
+        series.columns.template.setAll({
+          cornerRadiusTL: 5,
+          cornerRadiusTR: 5,
+        });
+
+        series.data.setAll(dashboardData.fees);
+        chartInstances.revenue = root;
+      }
+
+      function createDemographicsChart() {
+        const root = am5.Root.new("demographicsChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(
+          am5percent.PieChart.new(root, {
+            layout: root.verticalLayout,
+            innerRadius: am5.percent(50),
+          })
+        );
+
+        const series = chart.series.push(
+          am5percent.PieSeries.new(root, {
+            valueField: "value",
+            categoryField: "category",
+            alignLabels: false,
+          })
+        );
+
+        series.labels.template.setAll({
+          textType: "circular",
+          centerX: 0,
+          centerY: 0,
+          fontSize: 14,
+        });
+
+        const data = [
+          {
+            category: "International",
+            value: dashboardData.demographics.international,
+          },
+          { category: "Domestic", value: dashboardData.demographics.domestic },
+        ];
+
+        series.data.setAll(data);
+
+        const legend = chart.children.push(
+          am5.Legend.new(root, {
+            centerX: am5.p50,
+            x: am5.p50,
+            marginTop: 15,
+          })
+        );
+        legend.data.setAll(series.dataItems);
+        chartInstances.demographics = root;
+      }
+
+      function createPerformanceChart() {
+        const root = am5.Root.new("performanceChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(
+          am5radar.RadarChart.new(root, {
+            panX: false,
+            panY: false,
+            wheelX: "none",
+            wheelY: "none",
+          })
+        );
+
+        const xAxis = chart.xAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "department",
+            renderer: am5radar.AxisRendererCircular.new(root, {}),
+          })
+        );
+
+        xAxis.data.setAll(dashboardData.performance);
+
+        const yAxis = chart.yAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5radar.AxisRendererRadial.new(root, {}),
+            min: 0,
+            max: 4.0,
+          })
+        );
+
+        const series = chart.series.push(
+          am5radar.RadarLineSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "gpa",
+            categoryXField: "department",
+            tooltip: am5.Tooltip.new(root, { labelText: "GPA: {valueY}" }),
+          })
+        );
+
+        series.strokes.template.setAll({ strokeWidth: 2 });
+        series.fills.template.setAll({ fillOpacity: 0.3, visible: true });
+        series.data.setAll(dashboardData.performance);
+        chartInstances.performance = root;
+      }
+
+      function createResearchChart() {
+        const root = am5.Root.new("researchChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(am5xy.XYChart.new(root, {}));
+
+        const xAxis = chart.xAxes.push(
+          am5xy.CategoryAxis.new(root, {
+            categoryField: "year",
+            renderer: am5xy.AxisRendererX.new(root, {}),
+          })
+        );
+
+        xAxis.data.setAll(dashboardData.research);
+
+        const yAxis = chart.yAxes.push(
+          am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+          })
+        );
+
+        const series = chart.series.push(
+          am5xy.LineSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "count",
+            categoryXField: "year",
+            tooltip: am5.Tooltip.new(root, {
+              labelText: "{valueY} publications",
+            }),
+          })
+        );
+
+        series.strokes.template.setAll({ strokeWidth: 3 });
+        series.fills.template.setAll({ fillOpacity: 0.2, visible: true });
+        series.data.setAll(dashboardData.research);
+        chartInstances.research = root;
+      }
+
+      function createEmploymentChart() {
+        const root = am5.Root.new("employmentChart");
+        root.setThemes([am5themes_Animated.new(root)]);
+
+        const chart = root.container.children.push(
+          am5percent.PieChart.new(root, {
+            layout: root.verticalLayout,
+          })
+        );
+
+        const series = chart.series.push(
+          am5percent.PieSeries.new(root, {
+            valueField: "count",
+            categoryField: "sector",
+          })
+        );
+
+        series.data.setAll(dashboardData.employment);
+
+        const legend = chart.children.push(
+          am5.Legend.new(root, {
+            centerX: am5.p50,
+            x: am5.p50,
+            marginTop: 15,
+          })
+        );
+        legend.data.setAll(series.dataItems);
+        chartInstances.employment = root;
+      }
+
+      // Load data on page load
+      window.addEventListener("DOMContentLoaded", fetchDashboardData);
+    </script>
+  </body>
+</html>

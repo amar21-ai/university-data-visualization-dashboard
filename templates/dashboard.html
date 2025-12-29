@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>University Management System</title>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/hierarchy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #2563eb;
+        --primary-dark: #1e40af;
+        --secondary: #7c3aed;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #06b6d4;
+        --dark: #1e293b;
+        --light: #f1f5f9;
+        --sidebar-width: 260px;
+      }
+
+      body {
+        font-family: "Inter", "Segoe UI", sans-serif;
+        background: var(--light);
+        color: var(--dark);
+      }
+
+      /* Sidebar Navigation */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--sidebar-width);
+        height: 100vh;
+        background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar-header {
+        padding: 25px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .sidebar-header h2 {
+        font-size: 1.4em;
+        margin-bottom: 5px;
+      }
+
+      .sidebar-header p {
+        font-size: 0.85em;
+        opacity: 0.8;
+      }
+
+      .nav-menu {
+        padding: 20px 0;
+      }
+
+      .nav-item {
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-left: 3px solid transparent;
+      }
+
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-left-color: white;
+      }
+
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-left-color: #10b981;
+        font-weight: 600;
+      }
+
+      .nav-icon {
+        font-size: 1.3em;
+        width: 24px;
+        text-align: center;
+      }
+
+      /* Main Content */
+      .main-content {
+        margin-left: var(--sidebar-width);
+        min-height: 100vh;
+      }
+
+      .top-bar {
+        background: white;
+        padding: 20px 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .page-title {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: var(--dark);
+      }
+
+      .filters-bar {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .filter-label {
+        font-size: 0.75em;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+
+      select,
+      input {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      select:hover,
+      input:hover {
+        border-color: var(--primary);
+      }
+
+      select:focus,
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .content-area {
+        padding: 30px;
+      }
+
+      .page {
+        display: none;
+      }
+
+      .page.active {
+        display: block;
+      }
+
+      /* KPI Cards */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .kpi-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary);
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      .kpi-label {
+        font-size: 0.85em;
+        color: #64748b;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      .kpi-value {
+        font-size: 2.2em;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 8px;
+      }
+
+      .kpi-trend {
+        font-size: 0.85em;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .trend-up {
+        color: var(--success);
+      }
+      .trend-down {
+        color: var(--danger);
+      }
+
+      /* Charts */
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .chart-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: var(--dark);
+      }
+
+      .chart-subtitle {
+        font-size: 0.85em;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 400px;
+      }
+
+      .large-chart {
+        grid-column: 1 / -1;
+      }
+
+      .large-chart .chart {
+        height: 500px;
+      }
+
+      /* Data Table */
+      .data-table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .data-table th {
+        background: var(--light);
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--dark);
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .data-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .data-table tr:hover {
+        background: #f8fafc;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 500;
+      }
+
+      .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      /* Loading & Error */
+      .loading {
+        text-align: center;
+        padding: 60px;
+        color: #64748b;
+      }
+
+      .loading-spinner {
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid var(--primary);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-message {
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        color: #991b1b;
+      }
+
+      /* Insights Panel */
+      .insights-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .insights-title {
+        font-size: 1.3em;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .insight-item {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+
+      .export-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .export-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>🎓 UniManage</h2>
+        <p>University Management System</p>
+      </div>
+      <div class="nav-menu">
+        <div class="nav-item active" onclick="showPage('overview')">
+          <span class="nav-icon">📊</span>
+          <span>Overview Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="showPage('students')">
+          <span class="nav-icon">👨‍🎓</span>
+          <span>Students</span>
+        </div>
+        <div class="nav-item" onclick="showPage('professors')">
+          <span class="nav-icon">👩‍🏫</span>
+          <span>Professors</span>
+        </div>
+        <div class="nav-item" onclick="showPage('courses')">
+          <span class="nav-icon">📚</span>
+          <span>Courses</span>
+        </div>
+        <div class="nav-item" onclick="showPage('research')">
+          <span class="nav-icon">🔬</span>
+          <span>Research</span>
+        </div>
+        <div class="nav-item" onclick="showPage('employment')">
+          <span class="nav-icon">💼</span>
+          <span>Employment</span>
+        </div>
+        <div class="nav-item" onclick="showPage('finances')">
+          <span class="nav-icon">💰</span>
+          <span>Finances</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <h1 class="page-title" id="pageTitle">Overview Dashboard</h1>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label class="filter-label">Department</label>
+            <select id="globalDeptFilter" onchange="applyFilters()">
+              <option value="all">All Departments</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Year</label>
+            <select id="globalYearFilter" onchange="applyFilters()">
+              <option value="all">All Years</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+            </select>
+          </div>
+          <button class="export-btn" onclick="exportData()">📥 Export</button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading dashboard data...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" style="display: none"></div>
+
+      <!-- Content Area -->
+      <div class="content-area" id="contentArea" style="display: none">
+        <!-- OVERVIEW PAGE -->
+        <div id="page-overview" class="page active">
+          <div class="kpi-grid" id="overviewKPIs"></div>
+
+          <div class="insights-panel">
+            <h3 class="insights-title">📈 Key Insights</h3>
+            <div id="overviewInsights"></div>
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title">Student Enrollment Trends</h3>
+                  <p class="chart-subtitle">
+                    Historical and projected enrollment
+                  </p>
+                </div>
+              </div>
+              <div id="overviewEnrollment" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Department Distribution</h3>
+              </div>
+              <div id="overviewDeptChart" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Performance Overview</h3>
+              </div>
+              <div id="overviewPerformance" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENTS PAGE -->
+        <div id="page-students" class="page">
+          <div class="kpi-grid" id="studentsKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Enrollment by Year & Department</h3>
+              </div>
+              <div id="studentsEnrollmentTrend" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">GPA Distribution</h3>
+              </div>
+              <div id="studentsGPADist" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Gender Distribution</h3>
+              </div>
+              <div id="studentsGender" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">International vs Domestic</h3>
+              </div>
+              <div id="studentsInternational" class="chart"></div>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <h3 style="margin-bottom: 20px">Recent Students</h3>
+            <table class="data-table" id="studentsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Year</th>
+                  <th>GPA</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PROFESSORS PAGE -->
+        <div id="page-professors" class="page">
+          <div class="kpi-grid" id="professorsKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Salary Analysis by Position</h3>
+              </div>
+              <div id="professorsSalary" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Faculty by Department</h3>
+              </div>
+              <div id="professorsDept" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Experience Distribution</h3>
+              </div>
+              <div id="professorsExperience" class="chart"></div>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <h3 style="margin-bottom: 20px">Faculty Directory</h3>
+            <table class="data-table" id="professorsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Position</th>
+                  <th>Experience</th>
+                  <th>Salary</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- COURSES PAGE -->
+        <div id="page-courses" class="page">
+          <div class="kpi-grid" id="coursesKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Top 15 Most Popular Courses</h3>
+              </div>
+              <div id="coursesPopular" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Courses by Department</h3>
+              </div>
+              <div id="coursesByDept" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Course Ratings</h3>
+              </div>
+              <div id="coursesRatings" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Capacity Utilization</h3>
+              </div>
+              <div id="coursesCapacity" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESEARCH PAGE -->
+        <div id="page-research" class="page">
+          <div class="kpi-grid" id="researchKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Publications Over Time</h3>
+              </div>
+              <div id="researchTrend" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Publications by Department</h3>
+              </div>
+              <div id="researchByDept" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Citation Impact</h3>
+              </div>
+              <div id="researchCitations" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMPLOYMENT PAGE -->
+        <div id="page-employment" class="page">
+          <div class="kpi-grid" id="employmentKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Employment by Sector</h3>
+              </div>
+              <div id="employmentSectors" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Starting Salaries</h3>
+              </div>
+              <div id="employmentSalaries" class="chart"></div>
+            </div>
+
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Employment Rate by Department</h3>
+              </div>
+              <div id="employmentByDept" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINANCES PAGE -->
+        <div id="page-finances" class="page">
+          <div class="kpi-grid" id="financesKPIs"></div>
+
+          <div class="chart-grid">
+            <div class="chart-container large-chart">
+              <div class="chart-header">
+                <h3 class="chart-title">Revenue Breakdown</h3>
+              </div>
+              <div id="financesRevenue" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Tuition Fees by Program</h3>
+              </div>
+              <div id="financesFees" class="chart"></div>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3 class="chart-title">Department Budgets</h3>
+              </div>
+              <div id="financesBudgets" class="chart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>
