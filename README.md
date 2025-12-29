@@ -32,13 +32,68 @@ It provides interactive insights into courses, professors, students, enrollments
 - **Version Control:** Git & GitHub  
 
 ---
-
 ## 🚀 How to Run the Project Locally
 
 1. **Clone the repository**
 ```bash
 git clone https://github.com/YOUR_USERNAME/university-data-visualization-dashboard.git
+```
 
-2. **Navigate to the project folder**
+2. **Navigate to the project directory**
+```bash
 cd university-data-visualization-dashboard
+```
 
+3. **(Optional) Create and activate a virtual environment**
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+4. **Install required dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+5. **Run the application**
+```bash
+python app.py
+```
+
+6. **Open the application in your browser**
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## 🗂️ Project Structure
+```
+university-data-visualization-dashboard/
+│── app.py
+│── static/
+│   └── dashboard.js
+│── templates/
+│   └── dashboard.html
+│── database/
+│   └── *.sql
+│── screenshots/
+│── README.md
+│── requirements.txt
+```
+
+---
+
+## 📸 Screenshots
+Screenshots of the dashboard interface and analytics views can be added to the `screenshots` folder and referenced here.
+
+Example:
+```md
+![Dashboard Overview](screenshots/dashboard-overview.png)
+![Courses Analytics](screenshots/courses-analytics.png)
+![Financial Dashboard](screenshots/finance-dashboard.png)
+```
+
+---
+## 👤 Author
+**Amar Elsegaey**  
